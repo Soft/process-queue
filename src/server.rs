@@ -83,10 +83,11 @@ impl Server {
 }
 
 fn setup_dbus_server(name: &str, sender: Sender<Args>) {
+    let name = get_dbus_name(name)
+                .expect("invalid server name");
     let conn = Connection::get_private(BusType::Session)
         .expect("failed to connect DBus");
-    conn.register_name(&get_dbus_name(name),
-                       NameFlag::ReplaceExisting as u32)
+    conn.register_name(&name, NameFlag::ReplaceExisting as u32)
         .unwrap();
     let fact = Factory::new_fn::<()>();
     let tree = fact.tree(()).add(

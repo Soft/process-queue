@@ -2,6 +2,7 @@
 extern crate clap;
 
 extern crate dbus;
+extern crate regex;
 
 #[macro_use]
 extern crate log;

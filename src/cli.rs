@@ -18,6 +18,7 @@ pub fn setup_command_line() -> App<'static, 'static> {
                      .help("Server name"))
                 .arg(Arg::with_name("retries")
                      .short("r")
+                     .long("retries")
                      .takes_value(true)
                      .value_name("COUNT")
                      .default_value("0")
