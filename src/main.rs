@@ -8,6 +8,8 @@ extern crate regex;
 extern crate log;
 extern crate env_logger;
 
+use std::process::exit;
+
 mod cli;
 mod client;
 mod common;
@@ -33,6 +35,11 @@ fn main() {
                 Some(dir) => dir.into(),
                 None => std::env::current_dir().unwrap()
             };
+            if !dir.is_dir() {
+                error!("{} is not a directory", dir.display());
+                exit(1);
+            }
+
             let retries = value_t_or_exit!(matches, "retries", usize);
             let server = Server::new(name, command, dir, &template as &[&str], retries);
             server.run();
