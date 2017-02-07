@@ -1,7 +1,7 @@
 use std::borrow::ToOwned;
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum Piece {
+enum Piece {
     Arg(String),
     Placeholder
 }
@@ -46,4 +46,14 @@ impl Template {
     pub fn placeholders(&self) -> usize {
         self.0.iter().filter(|p| **p == Piece::Placeholder).count()
     }
+}
+
+#[test]
+fn test_templates() {
+    let slice: &[&str] = &["a", "{}", "c", "{}"];
+    let template: Template = slice.into();
+    let filled = template.fill(&["b", "d"]);
+    assert!(filled.is_ok());
+    assert_eq!(filled.unwrap(), ["a", "b", "c", "d"]);
+    assert!(template.fill(&["b"]).is_err());
 }
