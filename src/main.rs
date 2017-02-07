@@ -23,6 +23,7 @@ fn main() {
     match matches.subcommand_name() {
         Some("server") => {
             let matches = matches.subcommand_matches("server").unwrap();
+            let name = matches.value_of("name").unwrap();
             let command = matches.value_of("command").unwrap();
             let template: Vec<&str> = matches.values_of("template")
                 .map(|v| v.collect())
@@ -32,16 +33,16 @@ fn main() {
                 None => std::env::current_dir().unwrap()
             };
             let retries = value_t_or_exit!(matches, "retries", usize);
-            let server = Server::new(command, dir, &template as &[&str], retries);
+            let server = Server::new(name, command, dir, &template as &[&str], retries);
             server.run();
         },
         Some("send") => {
-            let args: Vec<&str> = matches.subcommand_matches("send")
-                .unwrap()
-                .values_of("args")
+            let matches = matches.subcommand_matches("send").unwrap();
+            let name = matches.value_of("name").unwrap();
+            let args: Vec<&str> = matches.values_of("args")
                 .map(|v| v.collect())
                 .unwrap_or(vec![]);
-            client::run(&args);
+            client::run(name, &args);
         },
         _ => {}
     }

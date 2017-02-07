@@ -7,13 +7,14 @@ use std::thread;
 use dbus::tree::Factory;
 use dbus::{Connection, BusType, NameFlag};
 
-use common::DBUS_NAME;
+use common::{get_dbus_name, DBUS_INTERFACE};
 use templates::{Template, TemplateError};
 
 #[derive(Debug)]
 struct Args(Vec<String>);
 
 pub struct Server {
+    name: String,
     command: String,
     dir: PathBuf,
     template: Template,
@@ -28,9 +29,10 @@ pub enum ExecError {
 }
 
 impl Server {
-    pub fn new<C, T, P>(command: C, dir: P, template: T, retries: usize) -> Self
-        where C: Into<String>, P: AsRef<Path>, T: Into<Template> {
+    pub fn new<N, C, T, P>(name: N, command: C, dir: P, template: T, retries: usize) -> Self
+        where N: Into<String>, C: Into<String>, P: AsRef<Path>, T: Into<Template> {
         Server {
+            name: name.into(),
             command: command.into(),
             dir: dir.as_ref().to_owned(),
             template: template.into(),
@@ -39,21 +41,22 @@ impl Server {
     }
 
     pub fn run(&self) {
-        info!("Starting pqueue server");
+        info!("starting pqueue server");
         let (sender, receiver) = channel::<Args>();
+        let name = self.name.clone();
         thread::spawn(move || {
-            setup_dbus_server(sender);
+            setup_dbus_server(&name, sender);
         });
         while let Ok(Args(args)) = receiver.recv() {
             match self.exec(&args) {
                 Ok(_) =>
                     info!("succesfully executed \"{}\"", &self.command),
                 Err(ExecError::TemplateError(TemplateError::ArgumentCountMismatch)) =>
-                    error!("Failed to execute \"{}\": arguments do not fit the template", &self.command),
+                    error!("failed to execute \"{}\": arguments do not fit the template", &self.command),
                 Err(ExecError::IoError(err)) =>
-                    error!("Failed to execute \"{}\": {}", &self.command, err.description()),
+                    error!("failed to execute \"{}\": {}", &self.command, err.description()),
                 Err(ExecError::RetryError) =>
-                    error!("Failed to execute \"{}\": retry count exceeded", &self.command)
+                    error!("failed to execute \"{}\": retry count exceeded", &self.command)
             }
         }
     }
@@ -79,14 +82,16 @@ impl Server {
     }
 }
 
-fn setup_dbus_server(sender: Sender<Args>) {
+fn setup_dbus_server(name: &str, sender: Sender<Args>) {
     let conn = Connection::get_private(BusType::Session)
-        .expect("Failed to connect DBUS");
-    conn.register_name(DBUS_NAME, NameFlag::ReplaceExisting as u32).unwrap();
+        .expect("failed to connect DBus");
+    conn.register_name(&get_dbus_name(name),
+                       NameFlag::ReplaceExisting as u32)
+        .unwrap();
     let fact = Factory::new_fn::<()>();
     let tree = fact.tree(()).add(
         fact.object_path("/", ()).introspectable().add(
-            fact.interface(DBUS_NAME, ()).add_m(
+            fact.interface(DBUS_INTERFACE, ()).add_m(
                 fact.method("add", (), move |m| {
                     // TODO: remove unwrap
                     let args: Vec<String> = m.msg.get1().unwrap();
