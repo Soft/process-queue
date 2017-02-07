@@ -41,7 +41,7 @@ impl Server {
     }
 
     pub fn run(&self) {
-        info!("starting pqueue server");
+        info!("starting pqueue server with name \"{}\"", &self.name);
         let (sender, receiver) = channel::<Args>();
         let name = self.name.clone();
         thread::spawn(move || {
