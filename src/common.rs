@@ -15,3 +15,8 @@ pub fn get_dbus_name(name: &str) -> Result<String, NameError> {
     }
 }
 
+
+#[test]
+fn test_dbus_name() {
+    assert!(get_dbus_name("_/+").is_err());
+}
