@@ -1,0 +1,40 @@
+use clap::{App, SubCommand, AppSettings, Arg};
+
+pub fn setup_command_line() -> App<'static, 'static> {
+    App::new("pqueue")
+        .version("0.1")
+        .author("samuel.lauren@iki.fi")
+        .about("Queue commands for execution")
+        .setting(AppSettings::SubcommandRequired)
+        .subcommand(
+            SubCommand::with_name("server")
+                .about("Start a job queue server")
+                .setting(AppSettings::TrailingVarArg)
+                .arg(Arg::with_name("retries")
+                     .short("r")
+                     .takes_value(true)
+                     .value_name("COUNT")
+                     .default_value("0")
+                     .help("Retry count"))
+                .arg(Arg::with_name("dir")
+                     .short("d")
+                     .long("cd")
+                     .value_name("DIR")
+                     .help("Execute COMMAND in DIR"))
+                .arg(Arg::with_name("command")
+                     .required(true)
+                     .value_name("COMMAND")
+                     .help("Command to execute"))
+                .arg(Arg::with_name("template")
+                     .multiple(true)
+                     .help("Argument template")))
+        .subcommand(
+            SubCommand::with_name("send")
+                .about("Queue a new job")
+                .setting(AppSettings::TrailingVarArg)
+                .arg(Arg::with_name("args")
+                     .multiple(true)
+                     .help("Arguments to be combined with the template"))
+        )
+}
+
