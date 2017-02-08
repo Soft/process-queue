@@ -5,9 +5,11 @@ different sets of arguments. It can be useful for managing long-running tasks.
 
 ## Usage
 
-    pqueue server [-h|--help] [-V|--version] [-n|--name NAME] [-d|--cd DIR] [-r|--retries N] COMMAND TEMPLATE...
+    pqueue server [-h|--help] [-V|--version] [-n|--name NAME] [-c|--cd DIR] [-d|--daemon] [-r|--retries N] COMMAND TEMPLATE...
 
     pqueue send [-h|--help] [-V|--version] [-n|--name NAME] ARGS...
+
+    pqueue stop [-n|--name NAME]
 
 ## Templates
 
@@ -53,6 +55,11 @@ After this, we can send in a bunch of tasks:
 
 The tasks will execute one after another and new ones can be added even if the
 old ones are not finished.
+
+A server can be stopped with the `pqueue stop` command. If a server receives a
+stop request while it is processing a task, it will first wait for the current
+task to finish before stopping. When a stop request is received, any queued
+tasks will be discarded.
 
 ## Dependencies
 
