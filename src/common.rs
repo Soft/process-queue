@@ -69,7 +69,8 @@ fn get_pid_file_path(name: &str) -> Result<PathBuf, PidFileError> {
     let uid = get_current_uid();
     let gid = get_current_gid();
 
-    let dir = PathBuf::from(format!("/tmp/pqueue-{}", uid));
+    let temp = std::env::temp_dir();
+    let dir = PathBuf::from(temp.join(format!("pqueue-{}", uid)));
     let perms = Permissions::from_mode(0o700);
     if !dir.is_dir() {
         std::fs::create_dir(&dir)?;
