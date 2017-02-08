@@ -9,7 +9,7 @@ use std::thread;
 use dbus::tree::Factory;
 use dbus::{Connection, BusType, NameFlag};
 
-use common::{get_dbus_name, DBUS_INTERFACE};
+use common::{dbus_get_name, DBUS_INTERFACE, DBUS_METHOD_ADD, DBUS_METHOD_STOP};
 use templates::{Template, TemplateError};
 
 #[derive(Debug)]
@@ -118,7 +118,7 @@ impl Server {
 }
 
 fn setup_dbus_server(name: &str, state: Arc<Mutex<ServerState>>, sender: Sender<Args>) {
-    let name = get_dbus_name(name)
+    let name = dbus_get_name(name)
                 .expect("invalid server name");
     let conn = Connection::get_private(BusType::Session)
         .expect("failed to connect DBus");
@@ -129,7 +129,7 @@ fn setup_dbus_server(name: &str, state: Arc<Mutex<ServerState>>, sender: Sender<
     let tree = fact.tree(()).add(
         fact.object_path("/", ()).introspectable().add(
             fact.interface(DBUS_INTERFACE, ()).add_m(
-                fact.method("add", (), move |m| {
+                fact.method(DBUS_METHOD_ADD, (), move |m| {
                     // TODO: remove unwrap
                     let args: Vec<String> = m.msg.get1().unwrap();
                     info!("received new task with arguments {:?}", &args);
@@ -138,7 +138,7 @@ fn setup_dbus_server(name: &str, state: Arc<Mutex<ServerState>>, sender: Sender<
                     Ok(vec!(reply))
                 }).inarg::<Vec<String>, _>("args")
             ).add_m(
-                fact.method("stop", (), move |m| {
+                fact.method(DBUS_METHOD_STOP, (), move |m| {
                     info!("received stop request");
                     let mut state = state_clone.lock().unwrap();
                     *state = ServerState::Stopped;
