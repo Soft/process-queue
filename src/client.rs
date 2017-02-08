@@ -27,6 +27,21 @@ pub fn stop(name: &str) {
         .expect("failed to stop the server");
 }
 
+pub fn has_server(name: &str) {
+    let full_name = dbus_get_name(name).expect("invalid server name");
+    let conn = Connection::get_private(BusType::Session)
+        .expect("failed to connect DBus");
+    let mut status = 0;
+    if dbus_name_exists(&conn, &full_name)
+        .expect("failed to check if the name exists") {
+        println!("server \"{}\" exists", name);
+    } else {
+        println!("server \"{}\" does not exists", name);
+        status = 1;
+    }
+    std::process::exit(status);
+}
+
 fn check_name(connection: &Connection, short_name: &str, full_name: &str) {
     if !dbus_name_exists(&connection, full_name)
         .expect("failed to check if the name exists") {

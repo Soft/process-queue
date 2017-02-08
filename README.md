@@ -11,6 +11,8 @@ different sets of arguments. It can be useful for managing long-running tasks.
 
     pqueue stop [-n|--name NAME]
 
+    pqueue has [-n|--name NAME]
+
 ## Templates
 
 When a `pqueue` server is started, a program argument template can be specified.

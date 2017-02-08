@@ -73,7 +73,12 @@ fn main() {
             let matches = matches.subcommand_matches("stop").unwrap();
             let name = matches.value_of("name").unwrap();
             client::stop(name);
-        }
+        },
+        Some("has") => {
+            let matches = matches.subcommand_matches("has").unwrap();
+            let name = matches.value_of("name").unwrap();
+            client::has_server(name);
+        },
         _ => {}
     }
 }

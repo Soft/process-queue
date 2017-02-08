@@ -52,6 +52,10 @@ pub fn setup_command_line() -> App<'static, 'static> {
         .subcommand(
             SubCommand::with_name("stop")
                 .about("Stop a server")
+                .arg(name.clone()))
+        .subcommand(
+            SubCommand::with_name("has")
+                .about("Check if a server exists")
                 .arg(name))
 }
 
