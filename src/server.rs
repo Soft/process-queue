@@ -9,7 +9,8 @@ use std::thread;
 use dbus::tree::Factory;
 use dbus::{Connection, BusType, NameFlag};
 
-use common::{dbus_get_name, DBUS_INTERFACE, DBUS_METHOD_ADD, DBUS_METHOD_STOP};
+use common::{dbus_get_name, dbus_name_exists,
+             DBUS_INTERFACE, DBUS_METHOD_ADD, DBUS_METHOD_STOP};
 use templates::{Template, TemplateError};
 
 #[derive(Debug)]
@@ -118,11 +119,16 @@ impl Server {
 }
 
 fn setup_dbus_server(name: &str, state: Arc<Mutex<ServerState>>, sender: Sender<Args>) {
-    let name = dbus_get_name(name)
+    let full_name = dbus_get_name(name)
                 .expect("invalid server name");
     let conn = Connection::get_private(BusType::Session)
         .expect("failed to connect DBus");
-    conn.register_name(&name, NameFlag::ReplaceExisting as u32)
+    if dbus_name_exists(&conn, &full_name)
+        .expect("failed to check if the name exists") {
+            error!("the requested name \"{}\" is already in use", name);
+            return;
+    }
+    conn.register_name(&full_name, NameFlag::ReplaceExisting as u32)
         .unwrap();
     let fact = Factory::new_fn::<()>();
     let state_clone = state.clone();
