@@ -9,9 +9,9 @@ different sets of arguments. It can be useful for managing long-running tasks.
 
     pqueue send [-h|--help] [-V|--version] [-n|--name NAME] ARGS...
 
-    pqueue stop [-n|--name NAME]
+    pqueue stop [-h|--help] [-V|--version] [-n|--name NAME]
 
-    pqueue has [-n|--name NAME]
+    pqueue has [-h|--help] [-V|--version] [-n|--name NAME]
 
 ## Templates
 
