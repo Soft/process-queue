@@ -3,6 +3,10 @@
 process-queue is a tool for queuing sequential program executions using
 different sets of arguments. It can be useful for managing long-running tasks.
 
+## Installation
+
+    cargo install --git 'https://bitbucket.org/Soft/process-queue.git'
+
 ## Usage
 
     pqueue server [-h|--help] [-V|--version] [-n|--name NAME] [-c|--cd DIR] [-d|--daemon] [-r|--retries N] COMMAND TEMPLATE...
@@ -29,12 +33,14 @@ example, we start a `pqueue` server that will execute `echo` with two arguments,
 
     pqueue server echo Hello {}
 
-Once the server is listening, we can start sending in tasks by running:
+Once the server is listening, we can start sending in tasks. For example, let's
+greet the world by running:
 
     pqueue send world
 
-We can see that the string "Hello world" got printed in the terminal running the
-server. The server will keep listening for new tasks, if we now execute:
+We can see that the string "Hello world" got printed in the terminal where the
+server is running. The server will keep listening for new tasks, if we now
+execute:
 
     pqueue send "John Doe"
 
