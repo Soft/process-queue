@@ -9,7 +9,7 @@ different sets of arguments. It can be useful for managing long-running tasks.
 
 ## Usage
 
-    pqueue server [-h|--help] [-V|--version] [-n|--name NAME] [-c|--cd DIR] [-d|--daemon] [-r|--retries N] COMMAND TEMPLATE...
+    pqueue server [-h|--help] [-V|--version] [-n|--name NAME] [-c|--cd DIR] [-l|--log FILE] [-d|--daemon] [-r|--retries N] COMMAND TEMPLATE...
 
 Start a server for running `COMMAND` instances using arguments defined using `TEMPLATE`.
 
