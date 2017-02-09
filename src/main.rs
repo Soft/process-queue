@@ -40,7 +40,8 @@ fn main() {
                 .unwrap_or(vec![]);
 
             let dir = match matches.value_of("dir") {
-                Some(dir) => dir.into(),
+                Some(dir) => std::fs::canonicalize(dir)
+                    .expect("failed to get the canonical representation for path"),
                 None => std::env::current_dir().unwrap()
             };
 
