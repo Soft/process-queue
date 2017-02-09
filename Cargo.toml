@@ -10,6 +10,10 @@ version = "0.1.0"
 name = "pqueue"
 path = "src/main.rs"
 
+[profile.release]
+lto = true
+panic = "abort"
+
 [build-dependencies]
 clap = "2.20.3"
 
