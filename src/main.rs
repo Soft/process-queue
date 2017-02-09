@@ -8,10 +8,11 @@ extern crate users;
 extern crate xdg;
 
 #[macro_use]
-extern crate log;
-extern crate env_logger;
+extern crate slog;
+extern crate slog_term;
 
 use std::process::exit;
+use slog::DrainExt;
 
 mod cli;
 mod client;
@@ -24,7 +25,9 @@ use server::Server;
 use common::daemonize;
 
 fn main() {
-    env_logger::init().unwrap();
+    let drain = slog_term::streamer().compact().build().fuse();
+    let log = slog::Logger::root(drain, None);
+
     let matches = setup_command_line().get_matches();
 
     match matches.subcommand_name() {
@@ -42,7 +45,8 @@ fn main() {
             };
 
             if !dir.is_dir() {
-                error!("{} is not a directory", dir.display());
+                error!(log, "path is not a directory";
+                       "path" => format!("{}", dir.display()));
                 exit(1);
             }
 
@@ -53,7 +57,12 @@ fn main() {
             };
 
             let retries = value_t_or_exit!(matches, "retries", usize);
-            let server = Server::new(name, command, dir, &template as &[&str], retries);
+            let server = Server::new(name,
+                                     command,
+                                     dir,
+                                     &template as &[&str],
+                                     retries,
+                                     &log);
             server.run();
 
             if let Some(pid_file) = pid_file {
@@ -67,17 +76,17 @@ fn main() {
             let args: Vec<&str> = matches.values_of("args")
                 .map(|v| v.collect())
                 .unwrap_or(vec![]);
-            client::send(name, &args);
+            client::send(name, &args, log);
         },
         Some("stop") => {
             let matches = matches.subcommand_matches("stop").unwrap();
             let name = matches.value_of("name").unwrap();
-            client::stop(name);
+            client::stop(name, log);
         },
         Some("has") => {
             let matches = matches.subcommand_matches("has").unwrap();
             let name = matches.value_of("name").unwrap();
-            client::has_server(name);
+            client::has_server(name, log);
         },
         _ => {}
     }
