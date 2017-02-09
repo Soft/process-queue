@@ -32,6 +32,7 @@ pub fn setup_command_line() -> App<'static, 'static> {
                 .arg(Arg::with_name("log")
                      .short("l")
                      .long("log")
+                     .takes_value(true)
                      .value_name("PATH")
                      .help("Log to PATH instead of stdout"))
                 .arg(Arg::with_name("daemon")
@@ -45,6 +46,7 @@ pub fn setup_command_line() -> App<'static, 'static> {
                      .help("Command to execute"))
                 .arg(Arg::with_name("template")
                      .multiple(true)
+                     .value_name("TEMPLATE")
                      .help("Argument template")))
         .subcommand(
             SubCommand::with_name("send")

@@ -1,10 +1,14 @@
 [package]
 authors = ["Samuel Laurén <samuel.lauren@iki.fi>"]
+description = "Queue programs for execution"
 build = "build.rs"
 license = "GPL-3.0"
 name = "process-queue"
 readme = "README.md"
 version = "0.1.0"
+repository = "https://bitbucket.org/Soft/process-queue"
+keywords = ["queue"]
+categories = ["command-line-utilities"]
 
 [[bin]]
 name = "pqueue"
@@ -24,8 +28,6 @@ slog-stream = "1.2.0"
 slog-term = "1.5.0"
 users = "0.5.2"
 xdg = "2.0.0"
-
-[profile]
 
 [profile.release]
 lto = true

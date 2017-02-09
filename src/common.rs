@@ -12,6 +12,7 @@ use dbus;
 use dbus::{Connection, Message};
 
 pub const DBUS_INTERFACE: &'static str = "org.ProcessQueue";
+pub const DBUS_PATH: &'static str = "/";
 pub const DBUS_METHOD_ADD: &'static str = "Add";
 pub const DBUS_METHOD_STOP: &'static str = "Stop";
 

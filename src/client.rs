@@ -38,7 +38,7 @@ pub fn has_server(name: &str, log: Logger) {
 fn check_name(connection: &Connection, short_name: &str, full_name: &str, log: Logger) {
     if !dbus_name_exists(&connection, full_name)
         .expect("failed to check if the name exists") {
-        error!(log, "server \"{}\" does not exists", short_name);
+        error!(log, "server does not exists"; "name" => short_name);
         std::process::exit(1);
     }
 }

@@ -11,7 +11,7 @@ use dbus::{Connection, BusType, NameFlag};
 use slog::Logger;
 
 use common::{dbus_get_name, dbus_name_exists,
-             DBUS_INTERFACE, DBUS_METHOD_ADD, DBUS_METHOD_STOP};
+             DBUS_INTERFACE, DBUS_PATH, DBUS_METHOD_ADD, DBUS_METHOD_STOP};
 use templates::{Template, TemplateError};
 
 #[derive(Debug)]
@@ -102,9 +102,9 @@ impl Server {
                            "reason" => "retry count exceeded")
             }
 
-            match *state.lock().unwrap() {
-                ServerState::Stopped => break,
-                _ => {}
+            if let ServerState::Stopped = *state.lock().unwrap() {
+                info!(self.log, "stopping"; "name" => self.name);
+                break;
             }
         }
     }
@@ -137,18 +137,25 @@ impl Server {
     }
 }
 
-fn setup_dbus_server(name: &str, state: Arc<Mutex<ServerState>>, sender: Sender<Args>, log: Logger) {
+fn setup_dbus_server(name: &str,
+                     state: Arc<Mutex<ServerState>>,
+                     sender: Sender<Args>,
+                     log: Logger) {
     let full_name = dbus_get_name(name)
                 .expect("invalid server name");
+
     let conn = Connection::get_private(BusType::Session)
         .expect("failed to connect DBus");
+
     if dbus_name_exists(&conn, &full_name)
         .expect("failed to check if the name exists") {
             error!(log, "server name is already in use"; "name" => name);
             return;
     }
+
     conn.register_name(&full_name, NameFlag::ReplaceExisting as u32)
         .unwrap();
+
     let fact = Factory::new_fn::<()>();
 
     let state_clone = state.clone();
@@ -156,7 +163,7 @@ fn setup_dbus_server(name: &str, state: Arc<Mutex<ServerState>>, sender: Sender<
     let log_stop = log.clone();
 
     let tree = fact.tree(()).add(
-        fact.object_path("/", ()).introspectable().add(
+        fact.object_path(DBUS_PATH, ()).introspectable().add(
             fact.interface(DBUS_INTERFACE, ()).add_m(
                 fact.method(DBUS_METHOD_ADD, (), move |m| {
                     // TODO: remove unwrap
@@ -177,11 +184,12 @@ fn setup_dbus_server(name: &str, state: Arc<Mutex<ServerState>>, sender: Sender<
             )
         )
     );
+
     tree.set_registered(&conn, true).unwrap();
+
     for _ in tree.run(&conn, conn.iter(1000)) {
-        match *state.lock().unwrap() {
-            ServerState::Stopped => break,
-            _ => {}
+        if let ServerState::Stopped = *state.lock().unwrap() {
+            break;
         }
     }
 }
