@@ -10,10 +10,6 @@ version = "0.1.0"
 name = "pqueue"
 path = "src/main.rs"
 
-[profile.release]
-lto = true
-panic = "abort"
-
 [build-dependencies]
 clap = "2.20.3"
 
@@ -23,6 +19,14 @@ daemonize = "0.2.3"
 dbus = "0.5.0"
 regex = "0.2.1"
 slog = "1.5.2"
+slog-json = "1.2.1"
+slog-stream = "1.2.0"
 slog-term = "1.5.0"
 users = "0.5.2"
 xdg = "2.0.0"
+
+[profile]
+
+[profile.release]
+lto = true
+panic = "abort"

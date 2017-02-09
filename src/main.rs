@@ -9,9 +9,13 @@ extern crate xdg;
 
 #[macro_use]
 extern crate slog;
+extern crate slog_stream;
+extern crate slog_json;
 extern crate slog_term;
 
 use std::process::exit;
+use std::fs::OpenOptions;
+
 use slog::DrainExt;
 
 mod cli;
@@ -26,7 +30,7 @@ use common::daemonize;
 
 fn main() {
     let drain = slog_term::streamer().compact().build().fuse();
-    let log = slog::Logger::root(drain, None);
+    let mut log = slog::Logger::root(drain, None);
 
     let matches = setup_command_line().get_matches();
 
@@ -44,6 +48,16 @@ fn main() {
                     .expect("failed to get the canonical representation for path"),
                 None => std::env::current_dir().unwrap()
             };
+
+            if let Some(path) = matches.value_of("log") {
+                    let file = OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(path)
+                        .expect("failed to open log file");
+                    let drain = slog_stream::stream(file, slog_json::default()).fuse();
+                    log = slog::Logger::root(drain, None);
+            }
 
             if !dir.is_dir() {
                 error!(log, "path is not a directory";

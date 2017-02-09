@@ -111,3 +111,4 @@ pub fn dbus_name_exists(connection: &Connection, name: &str) -> Result<bool, dbu
     dbus_list_names(connection).map(|v| v.into_iter().any(|n| n == name))
 }
 
+
