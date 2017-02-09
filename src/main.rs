@@ -15,7 +15,9 @@ extern crate slog_term;
 
 use std::process::exit;
 use std::fs::OpenOptions;
+use std::marker::{Send, Sync};
 
+use slog::Drain;
 use slog::DrainExt;
 
 mod cli;
@@ -29,10 +31,25 @@ use server::Server;
 use common::daemonize;
 
 fn main() {
-    let drain = slog_term::streamer().compact().build().fuse();
-    let mut log = slog::Logger::root(drain, None);
-
     let matches = setup_command_line().get_matches();
+
+    let drain = matches.subcommand_matches("server")
+        .and_then(|m| m.value_of("log"))
+        .map(|path| {
+            let file = OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(path)
+                .expect("failed to open log file");
+            let stream = Box::new(slog_stream::stream(file, slog_json::default()))
+                as Box<Drain<Error=std::io::Error> + Send + Sync>;
+            stream.fuse()
+        })
+        .unwrap_or(slog_term::streamer()
+                   .compact()
+                   .build()
+                   .fuse());
+    let log = slog::Logger::root(drain, None);
 
     match matches.subcommand_name() {
         Some("server") => {
@@ -48,16 +65,6 @@ fn main() {
                     .expect("failed to get the canonical representation for path"),
                 None => std::env::current_dir().unwrap()
             };
-
-            if let Some(path) = matches.value_of("log") {
-                    let file = OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open(path)
-                        .expect("failed to open log file");
-                    let drain = slog_stream::stream(file, slog_json::default()).fuse();
-                    log = slog::Logger::root(drain, None);
-            }
 
             if !dir.is_dir() {
                 error!(log, "path is not a directory";
