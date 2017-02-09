@@ -11,11 +11,22 @@ different sets of arguments. It can be useful for managing long-running tasks.
 
     pqueue server [-h|--help] [-V|--version] [-n|--name NAME] [-c|--cd DIR] [-d|--daemon] [-r|--retries N] COMMAND TEMPLATE...
 
+Start a server for running `COMMAND` instances using arguments defined using `TEMPLATE`.
+
     pqueue send [-h|--help] [-V|--version] [-n|--name NAME] ARGS...
+
+Send task to a server. The placeholders in server's argument template will be
+filled in from `ARGS`.
 
     pqueue stop [-h|--help] [-V|--version] [-n|--name NAME]
 
+Stop a server. If the server is currently executing a task it will be stopped
+after the current task finishes.
+
     pqueue has [-h|--help] [-V|--version] [-n|--name NAME]
+
+Check if a server exists. Returns a non-zero exit code if the server does not
+exist.
 
 ## Templates
 
