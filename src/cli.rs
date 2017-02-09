@@ -10,7 +10,7 @@ pub fn setup_command_line() -> App<'static, 'static> {
     App::new("pqueue")
         .version("0.1")
         .author("samuel.lauren@iki.fi")
-        .about("Queue commands for execution")
+        .about("Queue programs for execution")
         .setting(AppSettings::SubcommandRequired)
         .subcommand(
             SubCommand::with_name("server")
