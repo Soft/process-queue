@@ -13,10 +13,14 @@ extern crate slog_stream;
 extern crate slog_json;
 extern crate slog_term;
 
-use std::process::exit;
+use std::env;
 use std::fs::OpenOptions;
+use std::fs;
+use std::io;
 use std::marker::{Send, Sync};
+use std::process::exit;
 
+use slog::Logger;
 use slog::Drain;
 use slog::DrainExt;
 
@@ -39,17 +43,17 @@ fn main() {
             let file = OpenOptions::new()
                 .create(true)
                 .append(true)
-                .open(path)
+                .open(&path)
                 .expect("failed to open log file");
             let stream = Box::new(slog_stream::stream(file, slog_json::default()))
-                as Box<Drain<Error=std::io::Error> + Send + Sync>;
+                as Box<Drain<Error=io::Error> + Send + Sync>;
             stream.fuse()
         })
         .unwrap_or(slog_term::streamer()
                    .compact()
                    .build()
                    .fuse());
-    let log = slog::Logger::root(drain, None);
+    let log = Logger::root(drain, None);
 
     match matches.subcommand_name() {
         Some("server") => {
@@ -61,9 +65,9 @@ fn main() {
                 .unwrap_or(vec![]);
 
             let dir = match matches.value_of("dir") {
-                Some(dir) => std::fs::canonicalize(dir)
+                Some(dir) => fs::canonicalize(dir)
                     .expect("failed to get the canonical representation for path"),
-                None => std::env::current_dir().unwrap()
+                None => env::current_dir().unwrap()
             };
 
             if !dir.is_dir() {
