@@ -1,4 +1,4 @@
-# process-queue :train:
+# process-queue 🚋
 
 process-queue is a tool for queuing sequential program executions using
 different sets of arguments. It can be useful for managing long-running tasks.
