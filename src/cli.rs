@@ -8,10 +8,11 @@ pub fn setup_command_line() -> App<'static, 'static> {
                      .default_value("default")
                      .help("Server name");
     App::new("pqueue")
-        .version("0.1")
-        .author("samuel.lauren@iki.fi")
+        .version(env!("CARGO_PKG_VERSION"))
+        .author(env!("CARGO_PKG_AUTHORS"))
         .about("Queue programs for execution")
         .setting(AppSettings::SubcommandRequired)
+        .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(
             SubCommand::with_name("server")
                 .about("Start a job queue server")

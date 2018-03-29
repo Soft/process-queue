@@ -5,6 +5,8 @@ different sets of arguments. It can be useful for managing long-running tasks.
 
 ## Installation
 
+    cargo install process-queue
+
     cargo install --git 'https://bitbucket.org/Soft/process-queue.git'
 
 ## Usage
