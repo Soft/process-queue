@@ -1,44 +1,103 @@
-use std;
-use dbus::{Connection, BusType, Message};
-use slog::Logger;
+use std::io;
+use std::path::{Path, PathBuf};
+use std::time::Duration;
 
-use common::{dbus_get_name, dbus_name_exists,
-             DBUS_INTERFACE, DBUS_METHOD_ADD, DBUS_METHOD_STOP};
+use anyhow::{anyhow, Context, Result};
+use tokio::net::UnixStream;
 
-pub fn send(name: &str, args: &[&str], log: Logger) {
-    let full_name = dbus_get_name(name).expect("invalid server name");
-    let conn = Connection::get_private(BusType::Session)
-        .expect("failed to connect DBus");
-    check_name(&conn, name, &full_name, log);
-    let message = Message::new_method_call(full_name, "/", DBUS_INTERFACE, DBUS_METHOD_ADD)
-        .unwrap()
-        .append1(args);
-    conn.send_with_reply_and_block(message, 1000)
-        .expect("failed to add item to the queue");
+use crate::connection::Connection;
+use crate::request::{self, Request};
+use crate::response::{self, Response};
+use crate::template::Template;
+
+pub struct QueueClient {
+    connection: Connection,
 }
 
-pub fn stop(name: &str, log: Logger) {
-    let full_name = dbus_get_name(name).expect("invalid server name");
-    let conn = Connection::get_private(BusType::Session)
-        .expect("failed to connect DBus");
-    check_name(&conn, name, &full_name, log);
-    let message = Message::new_method_call(full_name, "/", DBUS_INTERFACE, DBUS_METHOD_STOP)
-        .unwrap();
-    conn.send_with_reply_and_block(message, 1000)
-        .expect("failed to stop the server");
-}
+impl QueueClient {
+    pub async fn connect<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        let stream = match UnixStream::connect(path).await {
+            Ok(stream) => stream,
+            Err(err)
+                if err.kind() == io::ErrorKind::ConnectionRefused
+                    || err.kind() == io::ErrorKind::NotFound =>
+            {
+                return Err(err).context("server is not running");
+            }
+            Err(err) => return Err(err.into()),
+        };
+        let connection = Connection::new(stream);
+        Ok(Self { connection })
+    }
 
-pub fn has_server(name: &str, log: Logger) {
-    let full_name = dbus_get_name(name).expect("invalid server name");
-    let conn = Connection::get_private(BusType::Session)
-        .expect("failed to connect DBus");
-    check_name(&conn, name, &full_name, log);
-}
+    pub async fn stop_server(&mut self) -> Result<response::Empty> {
+        self.request(Request::StopServer).await
+    }
 
-fn check_name(connection: &Connection, short_name: &str, full_name: &str, log: Logger) {
-    if !dbus_name_exists(&connection, full_name)
-        .expect("failed to check if the name exists") {
-        error!(log, "server does not exists"; "name" => short_name);
-        std::process::exit(1);
+    pub async fn create_queue(
+        &mut self,
+        name: String,
+        max_parallel: usize,
+        output: Option<PathBuf>,
+        timeout: Option<Duration>,
+        dir: Option<PathBuf>,
+        template: Option<Template>,
+    ) -> Result<response::Empty> {
+        let request = request::CreateQueue {
+            name,
+            max_parallel,
+            output,
+            timeout,
+            dir,
+            template,
+        };
+        self.request(request).await
+    }
+
+    pub async fn remove_queue(&mut self, name: String) -> Result<response::Empty> {
+        let request = request::RemoveQueue { name };
+        self.request(request).await
+    }
+
+    pub async fn send(
+        &mut self,
+        name: String,
+        timeout: Option<Duration>,
+        dir: Option<PathBuf>,
+        args: Vec<String>,
+    ) -> Result<response::Empty> {
+        let request = request::Send {
+            name,
+            dir,
+            timeout,
+            args,
+        };
+        self.request(request).await
+    }
+
+    pub async fn list_queues(&mut self) -> Result<response::ListQueues> {
+        self.request(Request::ListQueues).await
+    }
+
+    pub async fn list_tasks(&mut self, name: String) -> Result<response::ListTasks> {
+        let request = request::ListTasks { name };
+        self.request(request).await
+    }
+
+    async fn request<T, R>(&mut self, request: T) -> Result<R>
+    where
+        T: Into<Request>,
+        R: serde::de::DeserializeOwned,
+    {
+        let request: Request = request.into();
+        self.connection.write_message(&request).await?;
+        self.connection
+            .read_message::<Response<R>>()
+            .await?
+            .ok_or_else(|| anyhow!("server did not respond"))?
+            .into()
     }
 }
