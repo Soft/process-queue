@@ -1,86 +1,260 @@
-# process-queue 🚋
+# pqueue 🚌
 
-process-queue is a tool for queuing sequential program executions using
-different sets of arguments. It can be useful for managing long-running tasks.
+[![Build Status](https://api.travis-ci.org/Soft/process-queue.svg?branch=master)](https://travis-ci.org/Soft/process-queue)
+[![Latest Version](https://img.shields.io/crates/v/process-queue.svg)](https://crates.io/crates/process-queue)
+[![GitHub release](https://img.shields.io/github/release/Soft/process-queue.svg)](https://github.com/Soft/process-queue/releases)
+[![dependency status](https://deps.rs/repo/github/soft/process-queue/status.svg)](https://deps.rs/repo/github/soft/process-queue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+`pqueue` is a command-line task queue.
+
+Multiple queues can be created and each queue can have its own configuration.
 
 ## Installation
 
-    cargo install --git 'https://bitbucket.org/Soft/process-queue.git'
+Statically linked release binaries are available on [GitHub
+releases](https://github.com/Soft/process-queue/releases). These should work on
+any modern x86-64 Linux system.
+
+Alternatively, `pqueue` can be installed using `cargo`:
+
+```
+cargo install process-queue
+```
+
+## Getting Started
+
+All of the following examples assume that `pqueue` server has been first started
+with
+
+```
+pqueue start
+```
+
+This start `pqueue` server in the background. If desired, `--foreground` (`-f`)
+flag can be specified to keep the server attached to the terminal.
+
+The simplest possible way to use `pqueue` is to create the default queue using
+the default settings:
+
+```
+pqueue create
+```
+
+This create a default task queue that sequentially executes each submitted task.
+We can submit tasks for execution using `send` sub-command:
+
+```
+pqueue send echo "hello world"
+pqueue send true
+pqueue send sleep 60
+pqueue send curl example.com
+```
+
+This queued four tasks for execution starting with `echo`. List of the pending
+tasks in a queue can be inspected using `tasks` sub-command.
+
+Multiple queues can be created by supplying queue name using the `--name` (`-n`)
+option when creating the queue. If no name is given `pqueue` sub-commands
+implicitly operate on a queue named `default`.
+
+`pqueue` can be used for queueing time consuming tasks for execution. For
+example, we might use `pqueue` for queueing file downloads. The following will
+create a task queue that sequentially executes `wget` with each queued URL as an
+argument.
+
+```
+pqueue create -n downloads -t "wget {}"
+pqueue send -n downloads example.com
+pqueue send -n downloads example.org
+```
+
+This create a new task queue named `downloads` with a task template that species
+that each new task sent to the queue should be interpreted as an argument to
+`wget`.
+
+See `Task Templates` section for more information regarding queue templates.
+
+By default, `pqueue` executes each task sequentially. This can be changed by
+specifying `--max-parallel` (`-p`) option when creating the task queue. For
+example, the following command can be used create a queue that executes up to
+three tasks in parallel.
+
+```
+pqueue create -n sleepers -p 3 -t "sleep {}"
+pqueue send 60
+pqueue send 120
+pqueue send 180
+pqueue send 240
+```
+
+This will create a queue named `sleepers` for invoking `sleep` command with
+different arguments. Four tasks are submitted to the queue, three of which will
+begin executing immediately while the fourth task remains in the queue until
+free execution slots become available.
 
 ## Usage
 
-    pqueue server [-h|--help] [-V|--version] [-n|--name NAME] [-c|--cd DIR] [-l|--log FILE] [-d|--daemon] [-r|--retries N] COMMAND TEMPLATE...
+### `pqueue`
 
-Start a server for running `COMMAND` instances using arguments defined using `TEMPLATE`.
+```
+Task queue
 
-    pqueue send [-h|--help] [-V|--version] [-n|--name NAME] ARGS...
+USAGE:
+    pqueue [OPTIONS] <SUBCOMMAND>
 
-Send task to a server. The placeholders in server's argument template will be
-filled in from `ARGS`.
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
 
-    pqueue stop [-h|--help] [-V|--version] [-n|--name NAME]
+OPTIONS:
+    -s, --socket <socket>    Server socket path
 
-Stop a server. If the server is currently executing a task it will be stopped
-after the current task finishes.
+SUBCOMMANDS:
+    start-server    Start queue server [aliases: start]
+    stop-server     Stop queue server [aliases: stop]
+    create-queue    Create new task queue [aliases: create]
+    remove-queue    Remove task queue [aliases: remove]
+    list-queues     List queues [aliases: queues]
+    send-task       Send task to a queue [aliases: send]
+    list-tasks      List tasks in a queue [aliases: tasks]
+    help            Prints this message or the help of the given subcommand(s)
+```
 
-    pqueue has [-h|--help] [-V|--version] [-n|--name NAME]
+### `pqueue start-server`
 
-Check if a server exists. Returns a non-zero exit code if the server does not
-exist.
+```
+Start queue server
 
-## Templates
+USAGE:
+    pqueue start-server [FLAGS] [OPTIONS]
 
-When a `pqueue` server is started, a program argument template can be specified.
-Template is a list of program arguments and one or more "placeholders", that can
-be filled in by the sender. In the argument templates, `{}` specifies a
-placeholder. The placeholders will be replaced with the arguments specified with
-the `send` sub-command.
+FLAGS:
+    -f, --foreground    Keep pqueue server in the foreground
+    -h, --help          Prints help information
+    -v                  Log level
+    -V, --version       Prints version information
 
-## Examples
+OPTIONS:
+    -l, --log-file <log-file>    Log file
+```
 
-The `pqueue` server can be started with the `server` sub-command. In this
-example, we start a `pqueue` server that will execute `echo` with two arguments,
-"Hello" and one supplied by the sender.
+### `pqueue stop-server`
 
-    pqueue server echo Hello {}
+```
+Stop queue server
 
-Once the server is listening, we can start sending in tasks. For example, let's
-greet the world by running:
+USAGE:
+    pqueue stop-server
 
-    pqueue send world
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+```
 
-We can see that the string "Hello world" got printed in the terminal where the
-server is running. The server will keep listening for new tasks, if we now
-execute:
+### `pqueue create-queue`
 
-    pqueue send "John Doe"
+```
+Create new task queue
 
-We will see "Hello John Doe" printed as expected.
+USAGE:
+    pqueue create-queue [FLAGS] [OPTIONS]
 
-Where `pqueue` comes in handy is when dealing with long running tasks. Since the
-tasks are queued one can send in new a task even if the server is still
-executing an earlier program. All the tasks are stored in a queue and executed
-sequentially on a first-come, first-served basis.
+FLAGS:
+    -h, --help       Prints help information
+    -s, --stdout     Output to stdin
+    -V, --version    Prints version information
 
-To demonstrate this, we can start a new server named "timers":
+OPTIONS:
+    -d, --dir <dir>                      Default working directory
+    -f, --file <file>                    Output to file
+    -p, --max-parallel <max-parallel>    Maximum number of parallel tasks [default: 1]
+    -n, --name <name>                    Queue name [default: default]
+    -t, --template <template>            Task template
+    -T, --timeout <timeout>              Default task timeout
+```
 
-    pqueue server -n timers sleep {}
+### `pqueue remove-queue`
 
-After this, we can send in a bunch of tasks:
+```
+Remove task queue
 
-    pqueue send -n timers 10
-    pqueue send -n timers 4
-    pqueue send -n timers 20
+USAGE:
+    pqueue remove-queue [OPTIONS]
 
-The tasks will execute one after another and new ones can be added even if the
-old ones are not finished.
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
 
-A server can be stopped with the `pqueue stop` command. If a server receives a
-stop request while it is processing a task, it will first wait for the current
-task to finish before stopping. When a stop request is received, any queued
-tasks will be discarded.
+OPTIONS:
+    -n, --name <name>    Queue name [default: default]
+```
 
-## Dependencies
+### `pqueue list-queues`
 
-process-queue uses DBus for IPC and
-needs [`libdbus`](https://dbus.freedesktop.org/releases/dbus/) 1.6 or higher.
+```
+List queues
+
+USAGE:
+    pqueue list-queues
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+```
+
+### `pqueue send-task`
+
+```
+Send task to a queue
+
+USAGE:
+    pqueue send-task [OPTIONS] [args]...
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -d, --dir <dir>            Working directory
+    -n, --name <name>          Task name [default: default]
+    -T, --timeout <timeout>    Task timeout
+
+ARGS:
+    <args>...
+```
+
+### `pqueue list-tasks`
+
+```
+List tasks in a queue
+
+USAGE:
+    pqueue list-tasks [OPTIONS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -n, --name <name>    Task name [default: default]
+```
+
+## Task Templates
+
+By default queues can execute arbitrary commands. It is however possible to make
+specialized task queues that have a task template associated with them. When a
+new task is sent to a queue that has a task template associated with it, the
+template is expanded using the arguments supplied to `send-task`. When a queue
+is created, a task template can be specified using the `--template` option.
+
+Task templates specify the command that will be executed. The template can
+contain zero or more `{}` placeholders that will be replaced with the arguments
+supplied to `send-task`.
+
+Templates can also contain at most one `{...}` placeholder. This placeholders
+accepts variable number of arguments.
+
+## Issues
+
+Bugs should be reported at [GitHub](https://github.com/Soft/process-queue/issues).
