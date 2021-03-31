@@ -4,7 +4,7 @@ description = "Command-line task queue"
 license = "MIT"
 name = "process-queue"
 readme = "README.md"
-version = "0.2.0"
+version = "0.3.0"
 repository = "https://github.com/Soft/process-queue"
 edition = "2018"
 keywords = ["queue"]
@@ -26,7 +26,7 @@ libc = "0.2"
 log = { version = "0.4", default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-shlex = "1.0"
+shlex = "1"
 simplelog = { version = "0.10", default-features = false }
 structopt = { version = "0.3", default-features = false }
 tokio = { version = "1", features = ["net", "process", "rt-multi-thread", "io-util", "sync", "signal", "macros", "time"] }

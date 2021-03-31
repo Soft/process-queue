@@ -31,7 +31,7 @@ with
 pqueue start
 ```
 
-This start `pqueue` server in the background. If desired, `--foreground` (`-f`)
+This starts `pqueue` server in the background. If desired, `--foreground` (`-f`)
 flag can be specified to keep the server attached to the terminal.
 
 The simplest possible way to use `pqueue` is to create the default queue using
@@ -41,8 +41,8 @@ the default settings:
 pqueue create
 ```
 
-This create a default task queue that sequentially executes each submitted task.
-We can submit tasks for execution using `send` sub-command:
+This creates a default task queue that sequentially executes each submitted
+task. We can submit tasks for execution using `send` sub-command:
 
 ```
 pqueue send echo "hello world"
@@ -82,10 +82,10 @@ three tasks in parallel.
 
 ```
 pqueue create -n sleepers -p 3 -t "sleep {}"
-pqueue send 60
-pqueue send 120
-pqueue send 180
-pqueue send 240
+pqueue send -n sleepers 60
+pqueue send -n sleepers 120
+pqueue send -n sleepers 180
+pqueue send -n sleepers 240
 ```
 
 This will create a queue named `sleepers` for invoking `sleep` command with
