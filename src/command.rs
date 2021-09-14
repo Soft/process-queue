@@ -108,7 +108,7 @@ pub async fn list_tasks(args: GlobalArgs, command: ListTasksCommand) -> Result<(
             "{}",
             task.args
                 .iter()
-                .map(|s| shlex::quote(&s))
+                .map(|s| shlex::quote(s))
                 .collect::<Vec<_>>()
                 .join(" ")
         );

@@ -93,7 +93,11 @@ pub enum Command {
         display_order = 5
     )]
     SendTask(SendTaskCommand),
-    #[structopt(about = "List tasks in a queue", visible_alias = "tasks", display_order = 6)]
+    #[structopt(
+        about = "List tasks in a queue",
+        visible_alias = "tasks",
+        display_order = 6
+    )]
     ListTasks(ListTasksCommand),
 }
 

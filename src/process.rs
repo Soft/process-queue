@@ -66,7 +66,7 @@ impl Process {
         command.stdout(unsafe { Stdio::from_raw_fd(stdout.take_writer().unwrap().into()) });
         command.stderr(unsafe { Stdio::from_raw_fd(stderr.take_writer().unwrap().into()) });
         unsafe {
-            command.pre_exec(|| close_fds([0 as RawFd, 1, 2].iter().cloned().collect()));
+            command.pre_exec(|| close_fds([0, 1, 2].iter().cloned().collect()));
         };
         command.args(&task.args);
         if let Some(ref dir) = task.dir {

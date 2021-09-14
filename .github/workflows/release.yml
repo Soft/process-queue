@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: get version
+        run: echo "::set-env name=GIT_TAG_NAME::${GITHUB_REF#refs/tags/}"
+      - name: setup rust
+        run: rustup target add x86_64-unknown-linux-musl
+      - name: build
+        run: cargo build --release --target x86_64-unknown-linux-musl
+      - name: package
+        run: |
+          name="process-queue-${GIT_TAG_NAME}-x86_64-unknown-linux-musl"
+          outdir="target/work/$name"
+          artifactdir="target/artifacts"
+          mkdir -p "$outdir" "$artifactdir"
+          cp -t "$outdir" LICENSE README.md target/x86_64-unknown-linux-musl/release/pqueue
+          strip "$outdir"/pqueue
+          tar -czvf "${artifactdir}/${name}.tar.gz" -C target/work "$name"
+      - name: create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/artifacts/*

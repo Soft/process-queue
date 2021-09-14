@@ -54,7 +54,7 @@ pub fn parse_duration(input: &str) -> Result<Duration> {
     enum State {
         Duration,
         UnitNeeded(u64),
-    };
+    }
     let mut state = State::Duration;
     for piece in input.split_whitespace().flat_map(separate_numbers) {
         match state {
