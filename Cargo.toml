@@ -7,7 +7,7 @@ readme = "README.md"
 version = "0.3.0"
 repository = "https://github.com/Soft/process-queue"
 edition = "2018"
-keywords = ["queue"]
+keywords = ["queue", "task-queue"]
 categories = ["command-line-utilities"]
 
 [profile.release]

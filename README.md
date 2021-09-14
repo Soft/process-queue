@@ -1,6 +1,6 @@
-# pqueue 🚌
+# process-queue 🚌
 
-[![Build Status](https://api.travis-ci.org/Soft/process-queue.svg?branch=master)](https://travis-ci.org/Soft/process-queue)
+[![Build status](https://github.com/Soft/process-queue/workflows/ci/badge.svg)](https://github.com/Soft/process-queue/actions)
 [![Latest Version](https://img.shields.io/crates/v/process-queue.svg)](https://crates.io/crates/process-queue)
 [![GitHub release](https://img.shields.io/github/release/Soft/process-queue.svg)](https://github.com/Soft/process-queue/releases)
 [![dependency status](https://deps.rs/repo/github/soft/process-queue/status.svg)](https://deps.rs/repo/github/soft/process-queue)
